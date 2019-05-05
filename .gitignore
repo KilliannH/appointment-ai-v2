@@ -1,0 +1,8 @@
+.idea
+__pycache__
+stanford-postagger.jar
+models
+
+record.wav
+/myEnv/
+/resources/

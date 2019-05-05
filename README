@@ -1,0 +1,12 @@
+new try of appointment ai project
+
+// ---------------------------------------------------------------------------------------------
+
+Libraries : python3 : gTTS, SpeechRecognition, nltk for Stanford Part-Of-Speech Tagger, pyaudio
+
+nltk dependancies : path to : standford-postagger.jar, french.tagger
+
+--------------------------------------------------------------------------------------------- //
+
+so this is just an audioFile interpreter. You need to pass in an audiofile on main func and it will try to translate the request
+to post an appointment.
