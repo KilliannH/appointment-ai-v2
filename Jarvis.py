@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from gtts import gTTS   # Text to speech
 import locale
+import datetime
 import time
+import json
 
 # Parsing strings with tagger
 from nltk.tag import StanfordPOSTagger
@@ -15,8 +17,12 @@ JAR_FILE = TOP_DIR + '/resources/standford_tagger/stanford-postagger.jar'
 # init stanford tagger
 st = StanfordPOSTagger(MODEL, JAR_FILE)
 
+date_advs = ["aujourd'hui", "demain", "après demain"]
 
 class Jarvis:
+
+    user = {'wantsAction': False, 'action': '', 'appointment': False, 'appointmentName': '', 'date': datetime.date.today()}
+
     def __init__(self):
         locale.setlocale(locale.LC_TIME, '')
 
@@ -29,12 +35,66 @@ class Jarvis:
         os.remove("audio.mp3")
 
     def think(self, audiosource):
-        if "comment ça va" in audiosource:
-            self.speak("ça va bien.")
-        elif "ça va" in audiosource:
-            self.speak("ça va bien.")
+        output = st.tag(audiosource.split())
 
-        if "quelle heure est-il" in audiosource:
-            self.speak('il est ' + time.strftime('%-H') + ' heure ' + time.strftime('%M'))
-        elif "quelle heure il est" in audiosource:
+        #  CREATE  ##
+
+        if output[0][1] == 'VINF':
+            # we know the user wants an action here
+            self.user['wantsAction'] = True
+            if output[0][0] == 'créer':
+                self.user['action'] = 'CREATE'
+
+        if self.user['wantsAction'] and self.user['action'] == 'CREATE':
+            for i in range(0, len(output)):
+                if output[i][1] == 'NC':
+                    if output[i][0] == 'rendez-vous':
+                        # we know the user wants to create an appointment
+                        self.user['appointment'] = True
+                        break
+
+        if self.user['appointment']:
+            print(output)
+            appointment_name_arr = []
+            appointment_name = ''
+            for i in range(0, len(output)):
+                if output[i][1] == 'NC':
+                    if output[i][0] != 'rendez-vous':
+                        # we guess the name of the appointment
+                        appointment_name_arr.append(output[i])
+                elif output[i][1] == 'ADJ':
+                    appointment_name_arr.append(output[i])
+
+            for i in range(0, len(appointment_name_arr)):
+                if i < len(appointment_name_arr) - 1:
+                    appointment_name += appointment_name_arr[i][0] + ' '
+                else:
+                    appointment_name += appointment_name_arr[i][0]
+
+            self.user['appointmentName'] = appointment_name
+
+        if self.user['appointment']:
+            appointment_date = self.user['date']
+            for i in range(0, len(output)):
+                if output[i][1] == 'ADV':
+                    # we guess the user wants a date by an adverb
+                    for j in range(0, len(date_advs)):
+                        if output[i][0] == date_advs[j]:
+
+                            # we guess the adverb used for the date
+
+                            if j == 0:  # today
+                                pass
+                            elif j == 1:  # tomorrow
+                                appointment_date += datetime.timedelta(days=1)
+                            elif j == 2:  # in 2 days
+                                appointment_date += datetime.timedelta(days=2)
+
+            self.user['date'] = appointment_date
+
+        print(self.user)
+        self.speak("J'ai créé un rendez-vous, " + self.user['appointmentName'] + " le " + str(self.user['date'].strftime('%A %d %B %Y')))
+
+
+        if 'DET' in output[0][1] and 'heure' in output[1][0]:
             self.speak('il est ' + time.strftime('%-H') + ' heure ' + time.strftime('%M'))
