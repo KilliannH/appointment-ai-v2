@@ -17,7 +17,9 @@ JAR_FILE = TOP_DIR + '/resources/standford_tagger/stanford-postagger.jar'
 # init stanford tagger
 st = StanfordPOSTagger(MODEL, JAR_FILE)
 
-date_advs = ["aujourd'hui", "demain", "après demain"]
+date_advs = ["aujourd'hui", "demain", "après-demain"]
+weekDays_fr = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+dateKeywords_fr = ["prochain", "semaine", "mois", "jour", "hier"]
 
 class Jarvis:
 
@@ -61,18 +63,37 @@ class Jarvis:
                 if output[i][1] == 'NC':
                     if output[i][0] != 'rendez-vous':
                         # we guess the name of the appointment
-                        appointment_name_arr.append(output[i])
+                        appointment_name_arr.append(output[i][0])
                 elif output[i][1] == 'ADJ':
-                    appointment_name_arr.append(output[i])
+                    appointment_name_arr.append(output[i][0])
+
+            # sort the name in some way
+            sort = []
+            for i in range(0, len(appointment_name_arr)):
+                for j in range(0, len(dateKeywords_fr)):
+                    if appointment_name_arr[i] in dateKeywords_fr[j]:
+                        sort.append(appointment_name_arr[i])
+
+                for j in range(0, len(date_advs)):
+                    if appointment_name_arr[i] in date_advs[j]:
+                        sort.append(appointment_name_arr[i])
+
+                for j in range(0, len(weekDays_fr)):
+                    if appointment_name_arr[i] in weekDays_fr[j]:
+                        sort.append(appointment_name_arr[i])
+
+            for i in range(0, len(sort)):
+                appointment_name_arr.remove(sort[i])
 
             for i in range(0, len(appointment_name_arr)):
                 if i < len(appointment_name_arr) - 1:
-                    appointment_name += appointment_name_arr[i][0] + ' '
+                    appointment_name += appointment_name_arr[i] + ' '
                 else:
-                    appointment_name += appointment_name_arr[i][0]
+                    appointment_name += appointment_name_arr[i]
 
             self.user['appointmentName'] = appointment_name
 
+############# init self.user[date] at today, is not a good idea
         if self.user['appointment']:
             appointment_date = self.user['date']
             for i in range(0, len(output)):
