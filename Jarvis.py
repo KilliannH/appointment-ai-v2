@@ -19,7 +19,15 @@ st = StanfordPOSTagger(MODEL, JAR_FILE)
 
 date_advs = ["aujourd'hui", "demain", "après-demain"]
 weekDays_fr = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+months_fr = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "décembre"]
 dateKeywords_fr = ["prochain", "semaine", "mois", "jour", "hier"]
+
+
+def next_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0:  # Target day already happened this week
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
 
 class Jarvis:
 
@@ -93,9 +101,9 @@ class Jarvis:
 
             self.user['appointmentName'] = appointment_name
 
-############# init self.user[date] at today, is not a good idea
+        appointment_date = 0
+
         if self.user['appointment']:
-            appointment_date = self.user['date']
             for i in range(0, len(output)):
                 if output[i][1] == 'ADV':
                     # we guess the user wants a date by an adverb
@@ -103,6 +111,7 @@ class Jarvis:
                         if output[i][0] == date_advs[j]:
 
                             # we guess the adverb used for the date
+                            appointment_date = datetime.date.today()
 
                             if j == 0:  # today
                                 pass
@@ -112,6 +121,51 @@ class Jarvis:
                                 appointment_date += datetime.timedelta(days=2)
 
             self.user['date'] = appointment_date
+
+        dayfound = 0
+        monthfound = 0
+        yearfound = 0
+
+        if appointment_date == 0:
+            # that means date is not in date_advs array
+
+            # find if there is a day in request
+            for i in range(0, len(output)):
+                for j in range(0, len(weekDays_fr)):
+                    if output[i][0] == weekDays_fr[j]:
+                        dayfound = weekDays_fr[j]
+                        break
+
+            # find if there is a month in request
+            for i in range(0, len(output)):
+                for j in range(0, len(months_fr)):
+                    if output[i][0] == months_fr[j]:
+                        monthfound = months_fr[j]
+                        break
+
+        if dayfound != 0 and monthfound == 0:
+            # we might be in a case like "mardi prochain, mercredi prochain"
+
+            # ensure we are in 'prochain' case
+            nextinrequest = False
+
+            for i in range(0, len(output)):
+                if output[i][0] == dateKeywords_fr[0]:
+                    nextinrequest = True
+                    break
+
+            if nextinrequest:
+                appointment_date = next_weekday(datetime.date.today(), weekDays_fr.index(dayfound))
+
+            # ## have to check a "jeudi DANS deux semaines" case here
+            # and year, we 're still in the dayfound != 0 and monthfound == 0: case
+
+
+#### # after we'll check year, if year on query -> set year, else -> set nearest year
+
+
+        self.user['date'] = appointment_date
+
 
         print(self.user)
         self.speak("J'ai créé un rendez-vous, " + self.user['appointmentName'] + " le " + str(self.user['date'].strftime('%A %d %B %Y')))
