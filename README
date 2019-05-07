@@ -8,5 +8,7 @@ nltk dependancies : path to : standford-postagger.jar, french.tagger
 
 --------------------------------------------------------------------------------------------- //
 
+- User has to ear/know an exemple of querying an appointment.
+
 so this is just an audioFile interpreter. You need to pass in an audiofile on main func and it will try to translate the request
-to post an appointment.
+to create an appointment.
