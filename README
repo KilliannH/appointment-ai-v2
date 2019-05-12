@@ -1,5 +1,5 @@
 new try of appointment ai project
-
+-> Stopped because : Useless & really not optimized.
 // ---------------------------------------------------------------------------------------------
 
 Libraries : python3 : gTTS, SpeechRecognition, nltk for Stanford Part-Of-Speech Tagger, pyaudio

@@ -18,6 +18,8 @@ JAR_FILE = TOP_DIR + '/resources/standford_tagger/stanford-postagger.jar'
 st = StanfordPOSTagger(MODEL, JAR_FILE)
 
 date_advs = ["aujourd'hui", "demain", "après-demain"]
+date_keyword_number_days = ["un", "deux", "trois", "quatre", "cinq", "six", "sept"]
+date_keyword_number_weeks = ["une", "deux", "trois", "quatre"]
 weekDays_fr = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 months_fr = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "décembre"]
 dateKeywords_fr = ["prochain", "semaine", "mois", "jour", "hier"]
@@ -157,11 +159,38 @@ class Jarvis:
             if nextinrequest:
                 appointment_date = next_weekday(datetime.date.today(), weekDays_fr.index(dayfound))
 
-            # ## have to check a "jeudi DANS deux semaines" case here
-            # and year, we 're still in the dayfound != 0 and monthfound == 0: case
+            else:
+                daysGap = {'keyword': '', 'number': 0}
+
+                inrequest = False # Check DANS
+                for i in range(0, len(output)):
+                    if output[i][0] == 'dans':
+                        inrequest = True
+                        break
+
+                keyword = ''
+                if inrequest:
+                    for i in range(0, len(output)):
+                        for j in range(0, len(dateKeywords_fr)):
+                            if dateKeywords_fr[j] in output[i][0]:
+                                keyword = dateKeywords_fr[j]
+
+                    if keyword == 'semaine':
+                        numberweeks = 0
+                        for i in range(0, len(output)):
+                            for j in range(0, len(date_keyword_number_weeks)):
+                                if output[i][0] == date_keyword_number_weeks[j]:
+                                    numberweeks = j + 1
+                                    break
+                        daysGap['keyword'] = 'semaine'
+                        daysGap['number'] = numberweeks
+
+                print(daysGap)
+                # set the right date here
 
 
-#### # after we'll check year, if year on query -> set year, else -> set nearest year
+
+#### # after : check year, if year on query -> set year, else -> set nearest year
 
 
         self.user['date'] = appointment_date
